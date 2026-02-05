@@ -66,6 +66,18 @@ Automated validations included in the GPU smoke:
 
 Note: pytest writes artifacts under a temporary directory. Capture the output path from pytest logs.
 
+### C. CI Nightly Lane (Reference)
+
+The repository CI includes a dedicated nightly GPU smoke lane (`text2image-smoke`).
+It also supports manual dispatch from GitHub Actions.
+
+| Step | Command / Location | Expected | Result (PASS/FAIL/NA) | Notes |
+| --- | --- | --- | --- | --- |
+| Smoke command in CI | `pytest ./tests -m "slow and cuda and text2image" -v --run-slow --run-integration --basetemp ./_ci_tmp/pytest_tmp` | Completes without crash | | |
+| Smoke log path | `./_ci_tmp/logs/text2image_smoke.log` | File exists (even on failure) | | |
+| Pytest temp path | `./_ci_tmp/pytest_tmp` | Directory exists | | |
+| Uploaded artifact | `text2image-smoke-${{ github.run_id }}` | Visible in Actions run artifacts | | |
+
 ## Optional: Manual Script Path (Debug Only)
 
 Use these only if pytest fails and you need to isolate the issue.

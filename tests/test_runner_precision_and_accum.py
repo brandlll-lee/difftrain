@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 import torch
 from torch.utils.data import DataLoader, Dataset
 
@@ -54,14 +55,19 @@ def _make_runner_components():
     return scheduler, vae, text_encoder, unet
 
 
-def test_runner_precision_fallback_cpu(tmp_path: Path) -> None:
+def _make_valid_cfg() -> ExperimentConfig:
     cfg = ExperimentConfig()
-    cfg.train.precision = "fp16"
     cfg.train.max_steps = 1
     cfg.train.grad_accum_steps = 1
     cfg.train.checkpointing_steps = 1
     cfg.train.log_every = 1
     cfg.model.prediction_type = "epsilon"
+    return cfg
+
+
+def test_runner_precision_fallback_cpu(tmp_path: Path) -> None:
+    cfg = _make_valid_cfg()
+    cfg.train.precision = "fp16"
 
     scheduler, vae, text_encoder, unet = _make_runner_components()
     optimizer = CountingOptimizer(unet.parameters())
@@ -84,12 +90,9 @@ def test_runner_precision_fallback_cpu(tmp_path: Path) -> None:
 
 
 def test_runner_grad_accum_counts_optimizer_steps(tmp_path: Path) -> None:
-    cfg = ExperimentConfig()
+    cfg = _make_valid_cfg()
     cfg.train.max_steps = 2
     cfg.train.grad_accum_steps = 2
-    cfg.train.checkpointing_steps = 1
-    cfg.train.log_every = 1
-    cfg.model.prediction_type = "epsilon"
 
     scheduler, vae, text_encoder, unet = _make_runner_components()
     optimizer = CountingOptimizer(unet.parameters())
@@ -112,12 +115,7 @@ def test_runner_grad_accum_counts_optimizer_steps(tmp_path: Path) -> None:
 
 
 def test_checkpoint_payload_fields_present(tmp_path: Path) -> None:
-    cfg = ExperimentConfig()
-    cfg.train.max_steps = 1
-    cfg.train.grad_accum_steps = 1
-    cfg.train.checkpointing_steps = 1
-    cfg.train.log_every = 1
-    cfg.model.prediction_type = "epsilon"
+    cfg = _make_valid_cfg()
 
     scheduler, vae, text_encoder, unet = _make_runner_components()
     optimizer = CountingOptimizer(unet.parameters())
@@ -145,3 +143,101 @@ def test_checkpoint_payload_fields_present(tmp_path: Path) -> None:
     assert "precision" in payload
     assert "scaler" in payload
     assert "config" in payload
+
+
+def test_runner_invalid_precision_raises(tmp_path: Path) -> None:
+    cfg = _make_valid_cfg()
+    cfg.train.precision = "fp8"
+
+    scheduler, vae, text_encoder, unet = _make_runner_components()
+    optimizer = CountingOptimizer(unet.parameters())
+    dataloader = DataLoader(DummyDataset(num_items=1), batch_size=1, collate_fn=lambda x: x[0])
+
+    with pytest.raises(ValueError, match="Unsupported precision"):
+        run_text_to_image_training(
+            cfg=cfg,
+            unet=unet,
+            vae=vae,
+            text_encoder=text_encoder,
+            noise_scheduler=scheduler,
+            optimizer=optimizer,
+            train_dataloader=dataloader,
+            output_dir=tmp_path,
+            device=torch.device("cpu"),
+        )
+
+
+@pytest.mark.parametrize(
+    ("field_name", "field_value", "error_match"),
+    [
+        ("grad_accum_steps", 0, "grad_accum_steps"),
+        ("max_steps", 0, "max_steps"),
+        ("checkpointing_steps", 0, "checkpointing_steps"),
+        ("log_every", 0, "log_every"),
+    ],
+)
+def test_runner_invalid_positive_fields_raise(
+    tmp_path: Path, field_name: str, field_value: int, error_match: str
+) -> None:
+    cfg = _make_valid_cfg()
+    setattr(cfg.train, field_name, field_value)
+
+    scheduler, vae, text_encoder, unet = _make_runner_components()
+    optimizer = CountingOptimizer(unet.parameters())
+    dataloader = DataLoader(DummyDataset(num_items=1), batch_size=1, collate_fn=lambda x: x[0])
+
+    with pytest.raises(ValueError, match=error_match):
+        run_text_to_image_training(
+            cfg=cfg,
+            unet=unet,
+            vae=vae,
+            text_encoder=text_encoder,
+            noise_scheduler=scheduler,
+            optimizer=optimizer,
+            train_dataloader=dataloader,
+            output_dir=tmp_path,
+            device=torch.device("cpu"),
+        )
+
+
+def test_runner_missing_resume_checkpoint_raises(tmp_path: Path) -> None:
+    cfg = _make_valid_cfg()
+    cfg.train.resume_from = str(tmp_path / "missing-checkpoint.pt")
+
+    scheduler, vae, text_encoder, unet = _make_runner_components()
+    optimizer = CountingOptimizer(unet.parameters())
+    dataloader = DataLoader(DummyDataset(num_items=1), batch_size=1, collate_fn=lambda x: x[0])
+
+    with pytest.raises(FileNotFoundError, match="resume_from checkpoint not found"):
+        run_text_to_image_training(
+            cfg=cfg,
+            unet=unet,
+            vae=vae,
+            text_encoder=text_encoder,
+            noise_scheduler=scheduler,
+            optimizer=optimizer,
+            train_dataloader=dataloader,
+            output_dir=tmp_path,
+            device=torch.device("cpu"),
+        )
+
+
+def test_runner_non_batch_dataloader_item_raises(tmp_path: Path) -> None:
+    cfg = _make_valid_cfg()
+
+    scheduler, vae, text_encoder, unet = _make_runner_components()
+    optimizer = CountingOptimizer(unet.parameters())
+    bad_dataloader = [{"pixel_values": torch.randn(1, 3, 4, 4), "input_ids": torch.randint(0, 10, (1, 4))}]
+
+    with pytest.raises(TypeError, match="train_dataloader must yield TextToImageBatch"):
+        run_text_to_image_training(
+            cfg=cfg,
+            unet=unet,
+            vae=vae,
+            text_encoder=text_encoder,
+            noise_scheduler=scheduler,
+            optimizer=optimizer,
+            train_dataloader=bad_dataloader,
+            output_dir=tmp_path,
+            device=torch.device("cpu"),
+        )

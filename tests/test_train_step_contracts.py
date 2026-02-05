@@ -62,6 +62,16 @@ class UNetSample(torch.nn.Module):
         return _SampleOut(noisy_latents)
 
 
+class TextEncoderInvalid:
+    def __call__(self, input_ids: torch.Tensor):
+        return 123
+
+
+class UNetInvalid(torch.nn.Module):
+    def forward(self, noisy_latents, timesteps, encoder_hidden_states):  # noqa: D401
+        return "not-a-tensor"
+
+
 class VAEEncodeTensor:
     scaling_factor = 0.5
 
@@ -196,5 +206,37 @@ def test_train_step_raises_on_unknown_prediction_type() -> None:
             noise_scheduler=scheduler,
             batch=batch,
             prediction_type=None,
+            dream_training=False,
+        )
+
+
+def test_train_step_raises_on_invalid_text_encoder_output() -> None:
+    batch = _make_batch()
+    scheduler = _make_scheduler()
+
+    with pytest.raises(TypeError, match="Text encoder output"):
+        train_step(
+            unet=UNetTensor(),
+            vae=VAEEncodeTensor(),
+            text_encoder=TextEncoderInvalid(),
+            noise_scheduler=scheduler,
+            batch=batch,
+            prediction_type="epsilon",
+            dream_training=False,
+        )
+
+
+def test_train_step_raises_on_invalid_unet_output() -> None:
+    batch = _make_batch()
+    scheduler = _make_scheduler()
+
+    with pytest.raises(TypeError, match="UNet output"):
+        train_step(
+            unet=UNetInvalid(),
+            vae=VAEEncodeTensor(),
+            text_encoder=TextEncoderTensor(),
+            noise_scheduler=scheduler,
+            batch=batch,
+            prediction_type="epsilon",
             dream_training=False,
         )

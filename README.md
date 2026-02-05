@@ -29,6 +29,7 @@ text-to-image latent diffusion with SD-style UNet and CLIP conditioning.
 | Repro artifacts | Implemented | `env.json`, `config.resolved.yaml`, `run_manifest.json` |
 | Smoke config + dummy data | Implemented | `configs/smoke_text2image.yaml` |
 | Unit tests | Implemented | `tests/` (pytest markers for unit/integration/slow) |
+| Runner/train-step branch tests | Implemented | Covers `sample`, `dream_training=True`, and key error branches |
 | Benchmarks | Implemented | `benchmarks/benchmark_train_step.py` |
 | report_to / eval_every / save_every | Partial | Config fields present, not wired |
 | Loss variants (p2/snr/huber) | Partial | Config fields present, MSE only |
@@ -94,6 +95,14 @@ Validate snapshot pipeline without training:
   `python -m pip install -e "./difftrain[text2image,dev]" && pytest ./difftrain/tests -m "slow and cuda and text2image" -v --run-slow --run-integration`
 - Train-step micro-benchmark:
   `python ./difftrain/benchmarks/benchmark_train_step.py`
+
+**CI Lanes**
+- `tests` (push + pull_request): CPU matrix on Python 3.10/3.11; runs `pytest ./tests -v` and `ruff check .`.
+- `text2image-smoke` (nightly + manual dispatch): runs GPU smoke on self-hosted runner labels `self-hosted,linux,x64,gpu`.
+- Nightly lane stores smoke artifacts at:
+  - log: `./_ci_tmp/logs/text2image_smoke.log`
+  - pytest temp/artifacts: `./_ci_tmp/pytest_tmp`
+  - uploaded artifact: `text2image-smoke-${{ github.run_id }}`
 
 **Docs and Runbooks**
 - MVP spec: `docs/mvp_spec.md`

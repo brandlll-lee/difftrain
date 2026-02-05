@@ -4,7 +4,7 @@ import torch
 
 from difftrain.training import TextToImageBatch, train_step
 
-from .fixtures import DummyScheduler, DummyTextEncoder, DummyUNetFixed, DummyVAE, make_generator
+from .fixtures import DummyScheduler, DummyTextEncoder, DummyUNetFixed, DummyUNetTrain, DummyVAE, make_generator
 
 
 def _manual_latents(vae: DummyVAE, pixel_values: torch.Tensor) -> torch.Tensor:
@@ -81,3 +81,74 @@ def test_train_step_v_prediction() -> None:
     torch.testing.assert_close(output.timesteps, timesteps)
     torch.testing.assert_close(output.target, target)
     torch.testing.assert_close(output.loss, torch.zeros_like(output.loss))
+
+
+def test_train_step_sample_prediction() -> None:
+    torch.manual_seed(0)
+    alphas_cumprod = torch.tensor([0.85, 0.55, 0.25], dtype=torch.float32)
+    scheduler = DummyScheduler(alphas_cumprod, prediction_type="sample")
+    vae = DummyVAE()
+    text_encoder = DummyTextEncoder()
+
+    pixel_values = torch.randn(2, 3, 4, 4)
+    input_ids = torch.randint(0, 10, (2, 4))
+    batch = TextToImageBatch(pixel_values=pixel_values, input_ids=input_ids)
+
+    gen_manual = torch.Generator().manual_seed(777)
+    latents = _manual_latents(vae, pixel_values)
+    timesteps = torch.randint(0, alphas_cumprod.numel(), (2,), generator=gen_manual)
+    noise = torch.randn(latents.shape, generator=gen_manual)
+    noisy_latents = scheduler.add_noise(latents, noise, timesteps)
+
+    unet = DummyUNetFixed(pred=noisy_latents)
+    output = train_step(
+        unet=unet,
+        vae=vae,
+        text_encoder=text_encoder,
+        noise_scheduler=scheduler,
+        batch=batch,
+        prediction_type="sample",
+        dream_training=False,
+        generator=make_generator(777),
+    )
+
+    torch.testing.assert_close(output.timesteps, timesteps)
+    torch.testing.assert_close(output.target, noisy_latents)
+    torch.testing.assert_close(output.loss, torch.zeros_like(output.loss))
+
+
+def test_train_step_dream_training_updates_targets() -> None:
+    torch.manual_seed(0)
+    alphas_cumprod = torch.tensor([0.9, 0.6, 0.3], dtype=torch.float32)
+    vae = DummyVAE()
+    text_encoder = DummyTextEncoder()
+    unet = DummyUNetTrain()
+
+    pixel_values = torch.randn(2, 3, 4, 4)
+    input_ids = torch.randint(0, 10, (2, 4))
+    batch = TextToImageBatch(pixel_values=pixel_values, input_ids=input_ids)
+
+    base = train_step(
+        unet=unet,
+        vae=vae,
+        text_encoder=text_encoder,
+        noise_scheduler=DummyScheduler(alphas_cumprod, prediction_type="epsilon"),
+        batch=batch,
+        prediction_type="epsilon",
+        dream_training=False,
+        generator=make_generator(1234),
+    )
+    dream = train_step(
+        unet=unet,
+        vae=vae,
+        text_encoder=text_encoder,
+        noise_scheduler=DummyScheduler(alphas_cumprod, prediction_type="epsilon"),
+        batch=batch,
+        prediction_type="epsilon",
+        dream_training=True,
+        dream_detail_preservation=1.0,
+        generator=make_generator(1234),
+    )
+
+    assert not torch.allclose(dream.target, base.target)
+    assert not torch.allclose(dream.noisy_latents, base.noisy_latents)

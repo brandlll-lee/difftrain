@@ -14,6 +14,18 @@ prioritizes correctness, reproducibility, and clear contracts over feature volum
    - Optional GPU smoke (downloads model, 2 steps):
      `pytest ./difftrain/tests -m "slow and cuda and text2image" -v --run-slow --run-integration`
 
+## CI Lanes
+
+- `tests` lane runs on push/PR with CPU runners and executes `pytest ./tests -v` and `ruff check .`.
+- `text2image-smoke` lane runs nightly (and by manual dispatch) on self-hosted GPU runners.
+- Smoke lane command:
+  `pytest ./tests -m "slow and cuda and text2image" -v --run-slow --run-integration --basetemp ./_ci_tmp/pytest_tmp`
+- Smoke lane captures logs and artifacts:
+  - `./_ci_tmp/logs/text2image_smoke.log`
+  - `./_ci_tmp/pytest_tmp`
+
+If your organization uses different self-hosted runner labels, update `runs-on` in `.github/workflows/ci.yml`.
+
 ## Pull Request Guidelines
 
 - Keep changes focused and small when possible.

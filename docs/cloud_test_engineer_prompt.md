@@ -49,6 +49,15 @@ This document is an execution runbook for the test engineer. Do not change code.
 Notes:
 If offline mode is enabled (`HF_HUB_OFFLINE=1` or `TRANSFORMERS_OFFLINE=1`), the GPU smoke will skip.
 
+For CI/nightly parity, prefer:
+
+- `pytest ./tests -m "slow and cuda and text2image" -v --run-slow --run-integration --basetemp ./_ci_tmp/pytest_tmp 2>&1 | tee ./_ci_tmp/logs/text2image_smoke.log`
+
+Then verify:
+
+- `./_ci_tmp/logs/text2image_smoke.log`
+- `./_ci_tmp/pytest_tmp`
+
 ## Debug Path (Manual Scripts Only If pytest Fails)
 
 Use this path only when the pytest smoke fails and you need to isolate the issue.
@@ -75,6 +84,7 @@ Also capture:
 
 - `nvidia-smi` output
 - Full error logs if failures occur
+- Smoke artifact paths used by CI parity run (`./_ci_tmp/logs/text2image_smoke.log`, `./_ci_tmp/pytest_tmp`)
 
 ## Reporting Format (Send to Team)
 

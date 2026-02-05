@@ -9,7 +9,10 @@ prioritizes correctness, reproducibility, and clear contracts over feature volum
 2. Install editable deps:
    - `python -m pip install -e "./difftrain[dev]"`
 3. Run tests:
-   - `pytest ./difftrain/tests -v`
+   - Default unit tests (CPU, offline):
+     `pytest ./difftrain/tests -m "not slow and not integration" -v`
+   - Optional GPU smoke (downloads model, 2 steps):
+     `pytest ./difftrain/tests -m "slow and cuda and text2image" -v --run-slow --run-integration`
 
 ## Pull Request Guidelines
 

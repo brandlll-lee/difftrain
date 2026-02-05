@@ -28,7 +28,7 @@ text-to-image latent diffusion with SD-style UNet and CLIP conditioning.
 | Resume-from-checkpoint | Implemented | UNet + optimizer + global_step + scaler |
 | Repro artifacts | Implemented | `env.json`, `config.resolved.yaml`, `run_manifest.json` |
 | Smoke config + dummy data | Implemented | `configs/smoke_text2image.yaml` |
-| Unit tests | Implemented | `tests/` |
+| Unit tests | Implemented | `tests/` (pytest markers for unit/integration/slow) |
 | Benchmarks | Implemented | `benchmarks/benchmark_train_step.py` |
 | report_to / eval_every / save_every | Partial | Config fields present, not wired |
 | Loss variants (p2/snr/huber) | Partial | Config fields present, MSE only |
@@ -88,14 +88,16 @@ Validate snapshot pipeline without training:
 `python ./difftrain/scripts/validate_config.py --config ./difftrain/configs/smoke_text2image.yaml --output-dir ./difftrain/_tmp_run --deterministic`
 
 **Tests and Benchmarks**
-- Unit tests:
-  `python -m pip install -e "./difftrain[dev]" && pytest ./difftrain/tests -v`
+- Default unit tests (CPU, offline):
+  `python -m pip install -e "./difftrain[dev]" && pytest ./difftrain/tests -m "not slow and not integration" -v`
+- GPU training smoke (downloads model, 2 steps):
+  `python -m pip install -e "./difftrain[text2image,dev]" && pytest ./difftrain/tests -m "slow and cuda and text2image" -v --run-slow --run-integration`
 - Train-step micro-benchmark:
   `python ./difftrain/benchmarks/benchmark_train_step.py`
 
 **Docs and Runbooks**
 - MVP spec: `docs/mvp_spec.md`
-- Smoke checklist: `docs/mvp_smoke_checklist.md`
+- Smoke checklist (pytest-driven): `docs/mvp_smoke_checklist.md`
 - Cloud test engineer prompt: `docs/cloud_test_engineer_prompt.md`
 
 **Roadmap (Near-Term)**

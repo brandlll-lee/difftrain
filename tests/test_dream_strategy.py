@@ -1,35 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 import torch
 
 from difftrain.training import compute_dream_and_update_latents
-
-
-@dataclass
-class DummyConfig:
-    prediction_type: str
-
-
-class DummyScheduler:
-    def __init__(self, alphas_cumprod: torch.Tensor, prediction_type: str) -> None:
-        self.alphas_cumprod = alphas_cumprod
-        self.config = DummyConfig(prediction_type=prediction_type)
-
-
-class DummyOutput:
-    def __init__(self, sample: torch.Tensor) -> None:
-        self.sample = sample
-
-
-class DummyUNet(torch.nn.Module):
-    def __init__(self, pred: torch.Tensor) -> None:
-        super().__init__()
-        self._pred = pred
-
-    def forward(self, noisy_latents, timesteps, encoder_hidden_states):  # noqa: D401
-        return DummyOutput(self._pred)
+from .fixtures import DummyScheduler, DummyUNetFixed
 
 
 def _make_latents(
@@ -56,7 +30,7 @@ def test_dream_epsilon_prediction() -> None:
 
     target = noise
     pred_eps = noise + 0.1
-    unet = DummyUNet(pred_eps)
+    unet = DummyUNetFixed(pred_eps)
     scheduler = DummyScheduler(alphas_cumprod, prediction_type="epsilon")
 
     updated_noisy, updated_target = compute_dream_and_update_latents(
@@ -90,7 +64,7 @@ def test_dream_v_prediction() -> None:
 
     target_v = alpha_t * noise - sigma_t * x0
     pred_v = target_v + 0.05
-    unet = DummyUNet(pred_v)
+    unet = DummyUNetFixed(pred_v)
     scheduler = DummyScheduler(alphas_cumprod, prediction_type="v_prediction")
 
     updated_noisy, updated_target = compute_dream_and_update_latents(

@@ -35,6 +35,14 @@ text2image = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+  "unit: fast unit tests (CPU, offline)",
+  "integration: integration tests (may use external deps)",
+  "slow: slow tests (may download models or run training)",
+  "cuda: tests that require CUDA",
+  "text2image: tests that require text2image extras",
+]
 
 [tool.ruff]
 line-length = 110

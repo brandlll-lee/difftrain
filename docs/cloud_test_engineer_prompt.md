@@ -1,14 +1,15 @@
 # Cloud GPU Test Engineer Prompt (difftrain)
 
-Role: Cloud Test Engineer (RTX 4090)
+Role: Cloud Test Engineer (RTX 4090 or equivalent)
 
-Mission: Execute the smoke test plan on cloud GPU, record results, and report reproducible evidence.
+Mission: Execute the pytest-driven smoke test plan on a cloud GPU, record results, and report reproducible evidence.
 
 This document is an execution runbook for the test engineer. Do not change code. Follow the rules below.
 
 ## Scope
 
-- Run Text-to-Image MVP smoke tests on RTX 4090.
+- Run Text-to-Image MVP smoke tests on a GPU.
+- Use pytest automation as the primary path.
 - Fill in the checklist at `docs/mvp_smoke_checklist.md`.
 - Collect and preserve reproducibility artifacts and logs.
 
@@ -22,47 +23,44 @@ This document is an execution runbook for the test engineer. Do not change code.
 
 - Repository: `difftrain`
 - Config: `configs/smoke_text2image.yaml`
-- Dataset root (must match config): `./data/smoke_text2image`
 - Checklist: `docs/mvp_smoke_checklist.md`
+- pytest markers: `slow`, `integration`, `cuda`, `text2image`
 
 ## Guardrails (Hard Rules)
 
 - Only run commands approved by the ResearchEng lead.
 - Do not modify tracked files unless explicitly instructed.
-- If you must create a temporary config for AMP, put it under `./difftrain/_tmp_run/` (untracked), and record the path.
 - If a command fails, capture the full error log and stop. Do not retry with ad-hoc changes.
 
-## Execution Steps (Baseline)
+## Execution Steps (Primary Path: pytest)
 
-1. Install dependencies (optional extras):
-   - `python -m pip install -e "./difftrain[text2image]"`
+1. Install dependencies (with extras):
+   - `python -m pip install -e "./difftrain[text2image,dev]"`
 
-2. Create dummy ImageFolder dataset:
+2. Run default unit tests (CPU, offline):
+   - `pytest ./difftrain/tests -m "not slow and not integration" -v`
+
+3. Run GPU training smoke (downloads model, 2 steps):
+   - `pytest ./difftrain/tests -m "slow and cuda and text2image" -v --run-slow --run-integration`
+
+4. Fill the checklist:
+   - `docs/mvp_smoke_checklist.md`
+
+Notes:
+If offline mode is enabled (`HF_HUB_OFFLINE=1` or `TRANSFORMERS_OFFLINE=1`), the GPU smoke will skip.
+
+## Debug Path (Manual Scripts Only If pytest Fails)
+
+Use this path only when the pytest smoke fails and you need to isolate the issue.
+
+1. Create dummy ImageFolder dataset:
    - `python ./difftrain/scripts/make_dummy_imagefolder.py --output-dir ./data/smoke_text2image --num-images 4 --image-size 64`
 
-3. (Optional) Repro snapshot validation:
+2. Validate config + env snapshot:
    - `python ./difftrain/scripts/validate_config.py --config ./difftrain/configs/smoke_text2image.yaml --output-dir ./difftrain/_tmp_run --deterministic`
 
-4. Run smoke training (2 steps):
+3. Run smoke training (2 steps):
    - `python ./difftrain/scripts/train_text_to_image.py --config ./difftrain/configs/smoke_text2image.yaml --output-dir ./difftrain/_tmp_run`
-
-5. Verify artifacts exist:
-   - `./difftrain/_tmp_run/env.json`
-   - `./difftrain/_tmp_run/config.resolved.yaml`
-   - `./difftrain/_tmp_run/run_manifest.json`
-   - `./difftrain/_tmp_run/checkpoint-1.pt`
-   - `./difftrain/_tmp_run/checkpoint-2.pt`
-
-6. (Optional) Resume smoke:
-   - `python ./difftrain/scripts/train_text_to_image.py --config ./difftrain/configs/smoke_text2image.yaml --output-dir ./difftrain/_tmp_run --resume-from ./difftrain/_tmp_run/checkpoint-2.pt`
-
-## Optional AMP Tests
-
-- Create a temporary config copy under `./difftrain/_tmp_run/`:
-  - `cp ./difftrain/configs/smoke_text2image.yaml ./difftrain/_tmp_run/smoke_fp16.yaml`
-  - Edit `train.precision` to `fp16` or `bf16`
-- Run:
-  - `python ./difftrain/scripts/train_text_to_image.py --config ./difftrain/_tmp_run/smoke_fp16.yaml --output-dir ./difftrain/_tmp_run_fp16`
 
 ## What to Record
 
@@ -94,4 +92,3 @@ If any step fails:
 - Stop immediately.
 - Capture full logs.
 - Report the failure with reproduction steps.
- 

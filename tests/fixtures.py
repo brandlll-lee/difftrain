@@ -6,7 +6,7 @@ from typing import Tuple
 import torch
 
 
-@dataclass(frozen=True)
+@dataclass
 class DummyConfig:
     prediction_type: str
     num_train_timesteps: int

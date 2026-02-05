@@ -72,7 +72,7 @@ class DummyUNet(torch.nn.Module):
         self.dummy = torch.nn.Parameter(torch.zeros(1))
 
     def forward(self, noisy_latents, timesteps, encoder_hidden_states):  # noqa: D401
-        return DummyOutput(noisy_latents)
+        return DummyOutput(noisy_latents + self.dummy)
 
 
 class DummyDataset(Dataset):

@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import logging
 from pathlib import Path
-from typing import Iterable, List
+from typing import List
 
 import torch
 from torch.utils.data import DataLoader
@@ -18,9 +18,9 @@ logger = logging.getLogger(__name__)
 
 def _require_text2image_deps() -> None:
     try:
-        import PIL  # noqa: F401
-        import diffusers  # noqa: F401
         import datasets  # noqa: F401
+        import diffusers  # noqa: F401
+        import PIL  # noqa: F401
         import transformers  # noqa: F401
         import torchvision  # noqa: F401
     except Exception as exc:  # pragma: no cover - dependency check
@@ -73,7 +73,11 @@ def _build_dataloader(
     train_transforms = transforms.Compose(
         [
             transforms.Resize(cfg.data.image_size, interpolation=interpolation),
-            transforms.CenterCrop(cfg.data.image_size) if cfg.data.center_crop else transforms.RandomCrop(cfg.data.image_size),
+            (
+                transforms.CenterCrop(cfg.data.image_size)
+                if cfg.data.center_crop
+                else transforms.RandomCrop(cfg.data.image_size)
+            ),
             transforms.RandomHorizontalFlip() if cfg.data.random_flip else transforms.Lambda(lambda x: x),
             transforms.ToTensor(),
             transforms.Normalize([0.5], [0.5]),
@@ -117,7 +121,12 @@ def _load_models(cfg: ExperimentConfig):
     tokenizer = CLIPTokenizer.from_pretrained(model_id, subfolder="tokenizer", revision=revision)
     text_encoder = CLIPTextModel.from_pretrained(model_id, subfolder="text_encoder", revision=revision)
     vae = AutoencoderKL.from_pretrained(model_id, subfolder="vae", revision=revision, variant=variant)
-    unet = UNet2DConditionModel.from_pretrained(model_id, subfolder="unet", revision=revision, variant=variant)
+    unet = UNet2DConditionModel.from_pretrained(
+        model_id,
+        subfolder="unet",
+        revision=revision,
+        variant=variant,
+    )
 
     return noise_scheduler, tokenizer, text_encoder, vae, unet
 

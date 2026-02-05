@@ -6,7 +6,12 @@ from pathlib import Path
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Smoke check reproducibility artifacts exist.")
-    parser.add_argument("--output-dir", type=str, default="./difftrain/_tmp_run", help="Output directory to inspect.")
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="./difftrain/_tmp_run",
+        help="Output directory to inspect.",
+    )
     args = parser.parse_args()
 
     out_dir = Path(args.output_dir).resolve()

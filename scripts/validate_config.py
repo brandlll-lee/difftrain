@@ -11,7 +11,12 @@ from difftrain.utils.repro import resolve_output_dir, set_seed, write_env_report
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate and snapshot resolved config for reproducibility.")
     parser.add_argument("--config", type=str, default="configs/base.yaml", help="Path to YAML config.")
-    parser.add_argument("--output-dir", type=str, default=None, help="Override output dir (else use config.train.output_dir).")
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default=None,
+        help="Override output dir (else use config.train.output_dir).",
+    )
     parser.add_argument("--deterministic", action="store_true", help="Enable torch deterministic algorithms.")
     args = parser.parse_args()
 

@@ -32,7 +32,12 @@ class DummyUNet(torch.nn.Module):
         return DummyOutput(self._pred)
 
 
-def _make_latents(alphas_cumprod: torch.Tensor, timesteps: torch.Tensor, x0: torch.Tensor, noise: torch.Tensor):
+def _make_latents(
+    alphas_cumprod: torch.Tensor,
+    timesteps: torch.Tensor,
+    x0: torch.Tensor,
+    noise: torch.Tensor,
+):
     alphas = alphas_cumprod[timesteps].view(-1, 1, 1, 1)
     alpha_t = torch.sqrt(alphas)
     sigma_t = torch.sqrt(1.0 - alphas)

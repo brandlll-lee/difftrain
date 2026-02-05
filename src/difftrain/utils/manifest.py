@@ -125,7 +125,10 @@ def collect_data_fingerprint_placeholder(cfg: ExperimentConfig) -> Dict[str, Any
             "data_root": cfg.data.data_root,
             "image_size": cfg.data.image_size,
         },
-        "notes": "Data pipeline is not implemented yet. Replace with dataset version/hash + sampling rules later.",
+        "notes": (
+            "Data pipeline is not implemented yet. "
+            "Replace with dataset version/hash + sampling rules later."
+        ),
     }
 
 
@@ -194,7 +197,9 @@ def write_run_manifest(
                 "sha256": _sha256_text(config_source_text),
             },
             "resolved": cfg_dict,
-            "resolved_file_sha256": _sha256_file(resolved_config_path) if resolved_config_path.exists() else None,
+            "resolved_file_sha256": (
+                _sha256_file(resolved_config_path) if resolved_config_path.exists() else None
+            ),
         },
         "env": env_dict,
         "data_fingerprint": collect_data_fingerprint_placeholder(cfg),

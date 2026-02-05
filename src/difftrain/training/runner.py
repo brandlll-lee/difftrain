@@ -9,10 +9,10 @@ from typing import Iterable, Optional, Tuple
 
 import torch
 
+from ..config import ExperimentConfig
 from .batch import TextToImageBatch
 from .interfaces import NoiseSchedulerProtocol, TextEncoderProtocol, UNetProtocol, VAEProtocol
 from .train_step import TrainStepOutput, train_step
-from ..config import ExperimentConfig
 
 logger = logging.getLogger(__name__)
 
@@ -184,9 +184,10 @@ def run_text_to_image_training(
                 metadata=batch.metadata,
             )
 
-            autocast_ctx = (
-                torch.autocast(device_type=device.type, dtype=amp_dtype) if amp_dtype is not None else nullcontext()
-            )
+            if amp_dtype is not None:
+                autocast_ctx = torch.autocast(device_type=device.type, dtype=amp_dtype)
+            else:
+                autocast_ctx = nullcontext()
             with autocast_ctx:
                 step_out: TrainStepOutput = train_step(
                     unet=unet,

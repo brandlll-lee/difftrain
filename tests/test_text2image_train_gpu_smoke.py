@@ -9,13 +9,12 @@ import torch
 from torch.utils.data import DataLoader
 
 from difftrain.config import ExperimentConfig, load_config, save_config
-from difftrain.training import run_text_to_image_training, TextToImageBatch
+from difftrain.training import TextToImageBatch, run_text_to_image_training
 from difftrain.utils.dummy_data import create_dummy_imagefolder
 from difftrain.utils.manifest import write_run_manifest
 from difftrain.utils.repro import resolve_output_dir, set_seed, write_env_report
 
 from .testing_utils import require_text2image_deps
-
 
 pytestmark = [pytest.mark.slow, pytest.mark.integration, pytest.mark.cuda, pytest.mark.text2image]
 

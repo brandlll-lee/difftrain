@@ -3,10 +3,8 @@ from __future__ import annotations
 import sys
 import warnings
 from os.path import abspath, dirname, join
-from typing import List
 
 import pytest
-
 
 # Allow running tests without installing the package in editable mode.
 _repo_src_path = abspath(join(dirname(dirname(__file__)), "src"))
@@ -49,7 +47,7 @@ def _cuda_available() -> bool:
         return False
 
 
-def pytest_collection_modifyitems(config: pytest.Config, items: List[pytest.Item]) -> None:
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     run_integration = config.getoption("--run-integration")
     run_slow = config.getoption("--run-slow")
 

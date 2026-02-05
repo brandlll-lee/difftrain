@@ -4,7 +4,14 @@ import torch
 
 from difftrain.training import TextToImageBatch, train_step
 
-from .fixtures import DummyScheduler, DummyTextEncoder, DummyUNetFixed, DummyUNetTrain, DummyVAE, make_generator
+from .fixtures import (
+    DummyScheduler,
+    DummyTextEncoder,
+    DummyUNetFixed,
+    DummyUNetTrain,
+    DummyVAE,
+    make_generator,
+)
 
 
 def _manual_latents(vae: DummyVAE, pixel_values: torch.Tensor) -> torch.Tensor:

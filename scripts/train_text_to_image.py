@@ -21,8 +21,8 @@ def _require_text2image_deps() -> None:
         import datasets  # noqa: F401
         import diffusers  # noqa: F401
         import PIL  # noqa: F401
-        import transformers  # noqa: F401
         import torchvision  # noqa: F401
+        import transformers  # noqa: F401
     except Exception as exc:  # pragma: no cover - dependency check
         raise ImportError(
             "Missing optional dependencies. Install with `pip install -e .[text2image]`."

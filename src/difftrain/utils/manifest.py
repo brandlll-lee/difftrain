@@ -12,7 +12,6 @@ from typing import Any, Dict, Optional
 
 from ..config import ExperimentConfig
 
-
 MANIFEST_SCHEMA_VERSION = 1
 
 

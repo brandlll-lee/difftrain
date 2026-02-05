@@ -6,7 +6,7 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 
 from difftrain.config import ExperimentConfig
-from difftrain.training import TextToImageBatch, run_text_to_image_training
+from difftrain.training import run_text_to_image_training, TextToImageBatch
 
 from .fixtures import DummyScheduler, DummyTextEncoder, DummyUNetTrain, DummyVAE
 

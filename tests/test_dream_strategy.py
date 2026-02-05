@@ -3,6 +3,7 @@ from __future__ import annotations
 import torch
 
 from difftrain.training import compute_dream_and_update_latents
+
 from .fixtures import DummyScheduler, DummyUNetFixed
 
 

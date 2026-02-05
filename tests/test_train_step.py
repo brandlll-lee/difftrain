@@ -3,6 +3,7 @@ from __future__ import annotations
 import torch
 
 from difftrain.training import TextToImageBatch, train_step
+
 from .fixtures import DummyScheduler, DummyTextEncoder, DummyUNetFixed, DummyVAE, make_generator
 
 

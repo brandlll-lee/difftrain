@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "difftrain"
+version = "0.1.0"
+description = "Training-friendly diffusion research toolkit"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "torch",
+  "numpy",
+  "pyyaml",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "ruff",
+]
+text2image = [
+  "accelerate",
+  "datasets",
+  "diffusers",
+  "huggingface_hub",
+  "Pillow",
+  "torchvision",
+  "tqdm",
+  "transformers",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+

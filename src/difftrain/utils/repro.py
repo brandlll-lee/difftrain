@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import platform
 import random
 import sys
@@ -28,6 +29,9 @@ def set_seed(seed: int, *, deterministic: bool = True) -> None:
         torch.cuda.manual_seed_all(seed)
 
     if deterministic:
+        if torch.cuda.is_available():
+            # Required for deterministic CuBLAS kernels on CUDA>=10.2.
+            os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
         # PyTorch determinism knobs
         torch.backends.cudnn.benchmark = False
         torch.backends.cudnn.deterministic = True

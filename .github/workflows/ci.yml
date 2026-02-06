@@ -61,9 +61,25 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[text2image,dev]"
 
+      - name: Resolve Hugging Face endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          if curl -fsSIL --connect-timeout 8 --max-time 20 https://huggingface.co >/dev/null; then
+            echo "Using official Hugging Face endpoint."
+          else
+            echo "HF_ENDPOINT=https://hf-mirror.com" >> "$GITHUB_ENV"
+            echo "huggingface.co unreachable; falling back to HF mirror endpoint."
+          fi
+
       - name: Run GPU smoke test (capture logs)
         run: |
           mkdir -p ./_ci_tmp/logs ./_ci_tmp/pytest_tmp
+          export CUBLAS_WORKSPACE_CONFIG="${CUBLAS_WORKSPACE_CONFIG:-:4096:8}"
+          echo "CUBLAS_WORKSPACE_CONFIG=${CUBLAS_WORKSPACE_CONFIG}"
+          if [ -n "${HF_ENDPOINT:-}" ]; then
+            echo "HF_ENDPOINT=${HF_ENDPOINT}"
+          fi
           set -o pipefail
           pytest ./tests -m "slow and cuda and text2image" -v --run-slow --run-integration --basetemp ./_ci_tmp/pytest_tmp 2>&1 | tee ./_ci_tmp/logs/text2image_smoke.log
 

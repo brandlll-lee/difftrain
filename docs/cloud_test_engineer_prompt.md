@@ -41,6 +41,12 @@ This document is an execution runbook for the test engineer. Do not change code.
    - `pytest ./difftrain/tests -m "not slow and not integration" -v`
 
 3. Run GPU training smoke (downloads model, 2 steps):
+   - Optional helper for current shell:
+     `source ./scripts/setup_runtime_env.sh`
+   - Keep official Hugging Face endpoint by default; only fallback if unreachable:
+     `curl -fsSIL https://huggingface.co >/dev/null || export HF_ENDPOINT=https://hf-mirror.com`
+   - Ensure deterministic CUDA compatibility:
+     `export CUBLAS_WORKSPACE_CONFIG=:4096:8`
    - `pytest ./difftrain/tests -m "slow and cuda and text2image" -v --run-slow --run-integration`
 
 4. Fill the checklist:

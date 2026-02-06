@@ -48,7 +48,8 @@ def create_dummy_imagefolder(
             image_path = output_dir / image_name
 
             pixels = rng.integers(0, 256, size=(image_size, image_size, 3), dtype=np.uint8)
-            Image.fromarray(pixels, mode="RGB").save(image_path)
+            # Pillow>=11.3 deprecates the explicit `mode` argument for fromarray.
+            Image.fromarray(pixels).save(image_path)
             image_paths.append(image_path)
 
             record = {"file_name": image_name, "text": f"dummy caption {idx}"}

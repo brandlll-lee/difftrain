@@ -43,6 +43,16 @@ The pytest smoke test will create a dummy dataset automatically at a temp path.
 If offline mode is enabled, the GPU smoke test will be skipped.
 Check `HF_HUB_OFFLINE` or `TRANSFORMERS_OFFLINE`.
 
+For deterministic CUDA runs, ensure:
+- `CUBLAS_WORKSPACE_CONFIG=:4096:8` (or `:16:8`).
+
+Endpoint policy:
+- Default to official `huggingface.co`.
+- Fallback to mirror only when official endpoint is unreachable:
+  `curl -fsSIL https://huggingface.co >/dev/null || export HF_ENDPOINT=https://hf-mirror.com`
+- Optional helper (sets both policies for current shell):
+  `source ./scripts/setup_runtime_env.sh`
+
 ## Primary Path: Pytest Automation (Required)
 
 ### A. Default unit tests (CPU, offline)

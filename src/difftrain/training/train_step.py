@@ -90,9 +90,12 @@ def _encode_latents(vae: VAEProtocol, pixel_values: torch.Tensor) -> torch.Tenso
         latents = enc
     else:
         raise TypeError("VAE encode output must be Tensor or have latent_dist/sample")
-    scaling_factor = getattr(vae, "scaling_factor", None)
-    if scaling_factor is None and hasattr(vae, "config"):
+    scaling_factor = None
+    # Prefer config-backed scaling factor for diffusers compatibility.
+    if hasattr(vae, "config"):
         scaling_factor = getattr(vae.config, "scaling_factor", None)
+    if scaling_factor is None:
+        scaling_factor = getattr(vae, "scaling_factor", None)
     if scaling_factor is None:
         raise AttributeError("VAE must expose scaling_factor or config.scaling_factor")
     return latents * float(scaling_factor)

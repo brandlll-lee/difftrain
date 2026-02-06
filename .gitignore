@@ -24,6 +24,9 @@ dist/
 .vscode/
 .idea/
 
+# Codex CLI
+.codex/
+
 # OS
 .DS_Store
 Thumbs.db

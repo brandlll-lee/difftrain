@@ -96,6 +96,12 @@ Validate snapshot pipeline without training:
 - Train-step micro-benchmark:
   `python ./difftrain/benchmarks/benchmark_train_step.py`
 
+GPU smoke notes:
+- Session helper (recommended): `source ./scripts/setup_runtime_env.sh`
+- Deterministic CUDA runs require `CUBLAS_WORKSPACE_CONFIG` (the code now defaults to `:4096:8` when deterministic mode is enabled and CUDA is available).
+- Keep official `huggingface.co` as default. Only set a mirror endpoint when official access fails:
+  `curl -fsSIL https://huggingface.co >/dev/null || export HF_ENDPOINT=https://hf-mirror.com`
+
 **CI Lanes**
 - `tests` (push + pull_request): CPU matrix on Python 3.10/3.11; runs `pytest ./tests -v` and `ruff check .`.
 - `text2image-smoke` (nightly + manual dispatch): runs GPU smoke on self-hosted runner labels `self-hosted,linux,x64,gpu`.
